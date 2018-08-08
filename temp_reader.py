@@ -44,7 +44,7 @@ def read_temp():
 #Connect to mariadb
 
 while True:
-    con = mariadb.connect(host='192.168.0.10', port='3306', user='pi', password='raspberry', database='pi_test')
+    con = mariadb.connect(host='192.168.0.10', port='3306', user='user', password='password', database='db')
     cur = con.cursor()
     try:
         cur.execute("""INSERT INTO temperature (device,temp) VALUES ('{}',{})""".format(device,read_temp()))

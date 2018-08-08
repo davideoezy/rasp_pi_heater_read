@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+# Need mysql.connector - sudo apt-get -y install python3-mysql.connector
+
 import mysql.connector as mariadb
 import glob
 import sys
@@ -6,14 +8,9 @@ import time
 
 # ---------------- Initialise variables ------------------
 # Device id
-device = "RPi_1"
-# Server db connection
-host_ip = '192.168.0.10'
-host_port = '3308'
-host_db_name = 'pi_test'
-host_uid = 'pi'
-host_pword = 'raspberry'
+device = "RPi_2"
 
+# Initialise db parameters in connection string below
 
 #Conect to sensor
 base_dir = '/sys/bus/w1/devices/'
@@ -47,7 +44,7 @@ def read_temp():
 #Connect to mariadb
 
 while True:
-    con = mariadb.connect(host=host_ip, port=host_port, user=host_uid, password=host_pword, database=host_db_name)
+    con = mariadb.connect(host='192.168.0.10', port='3306', user='pi', password='raspberry', database='pi_test')
     cur = con.cursor()
     try:
         cur.execute("""INSERT INTO temperature (device,temp) VALUES ('{}',{})""".format(device,read_temp()))
@@ -55,3 +52,5 @@ while True:
     except:
         con.rollback()
     con.close()
+    print("""INSERT INTO temperature (device,temp) VALUES ('{}',{})""".format(device,read_temp()))
+    time.sleep(10)

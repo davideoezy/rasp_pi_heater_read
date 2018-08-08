@@ -52,5 +52,5 @@ while True:
     except:
         con.rollback()
     con.close()
-    print("""INSERT INTO temperature (device,temp) VALUES ('{}',{})""".format(device,read_temp()))
+#    print("""INSERT INTO temperature (device,temp) VALUES ('{}',{})""".format(device,read_temp()))
     time.sleep(10)

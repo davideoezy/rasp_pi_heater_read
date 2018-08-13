@@ -5,6 +5,7 @@ import mysql.connector as mariadb
 import glob
 import sys
 import time
+import io
 
 # ---------------- Initialise variables ------------------
 # Device id
@@ -41,13 +42,18 @@ def read_temp():
         temp_c = float(temp_string) / 1000.0
         return temp_c
 
+# Read CPU temp
+f = open("/sys/class/thermal/thermal_zone0/temp", "r")
+cpu_temp_string = (f.readline ())
+cpu_temp = float(temp_cpu_string) / 1000.0
+
 #Connect to mariadb
 
 while True:
     con = mariadb.connect(host='192.168.0.10', port='3306', user='user', password='password', database='db')
     cur = con.cursor()
     try:
-        cur.execute("""INSERT INTO temperature (device,temp) VALUES ('{}',{})""".format(device,read_temp()))
+        cur.execute("""INSERT INTO temperature (device,temp, cpu_temp) VALUES ('{}',{},{})""".format(device,read_temp(),cpu_temp))
         con.commit()
     except:
         con.rollback()

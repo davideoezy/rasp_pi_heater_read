@@ -17,6 +17,10 @@ db_host_port = '3306'
 db_user = 'rpi'
 db = 'temp_logger'
 
+CurrentWIFI = 0
+wifi_ssid = ""
+IP = ""
+temp_c = 0
 
 #Connect to sensor
 base_dir = '/sys/bus/w1/devices/'
@@ -56,8 +60,7 @@ cpu_temp = float(cpu_temp_string) / 1000.0
 try:
     proc = subprocess.Popen(["iwconfig",interface],stdout=subprocess.PIPE, universal_newlines=True)
     out, err = proc.communicate()
-    WIFI = 0
-    wifi_ssid = ""
+    
     for line in out.split("\n"):
         if("Quality" in line):
             line = line.replace("Link Quality=","")
@@ -84,14 +87,21 @@ except:
 
 #Connect to mariadb
 
+db_string = "host='{}', port='{}', user='{}', database='{}'".format(db_host,db_host_port,db_user,db)
+insert_stmt = """
+INSERT INTO temp_readings
+(device, temp, cpu_temp, wifi_signal_strengh, device_address)
+VALUES
+('{}',{},{},{},'{}')""".format(device_label,read_temp(),cpu_temp,CurrentWIFI,IP)
+
 while True:
-    con = mariadb.connect("host={}, port={}, user={}, database={}".format(db_host,db_host_port,db_user,db))
+    con = mariadb.connect(db_string)
     cur = con.cursor()
     try:
-        cur.execute("""INSERT INTO temp_readings (device,temp, cpu_temp, wifi_signal_strengh, device_address) VALUES ('{}',{},{},{},'{}')""".format(device_label,read_temp(),cpu_temp,Current_WIFI,IP))
+        cur.execute()
         con.commit()
     except:
         con.rollback()
     con.close()
-#    print("""INSERT INTO temperature (device,temp) VALUES ('{}',{})""".format(device,read_temp()))
+    #rint("""INSERT INTO temperature (device,temp) VALUES ('{}',{})""".format(device,read_temp()))
     time.sleep(30)

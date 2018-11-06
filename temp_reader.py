@@ -88,7 +88,7 @@ while True:
     con = mariadb.connect("host={}, port={}, user={}, database={}".format(db_host,db_host_port,db_user,db))
     cur = con.cursor()
     try:
-        cur.execute("""INSERT INTO temperature (device,temp, cpu_temp, ) VALUES ('{}',{},{})""".format(device_label,read_temp(),cpu_temp))
+        cur.execute("""INSERT INTO temp_readings (device,temp, cpu_temp, wifi_signal_strengh, device_address) VALUES ('{}',{},{},{},{})""".format(device_label,read_temp(),cpu_temp,Current_WIFI,IP))
         con.commit()
     except:
         con.rollback()

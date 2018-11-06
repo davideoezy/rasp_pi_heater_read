@@ -99,7 +99,7 @@ while True:
     con = mariadb.connect(db_string)
     cur = con.cursor()
     try:
-        cur.execute()
+        cur.execute(insert_stmt)
         con.commit()
     except:
         con.rollback()

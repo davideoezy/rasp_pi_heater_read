@@ -69,8 +69,9 @@ try:
             CurrentWIFI = WIFI
     for line in out.split("\n"):
         if("ESSID" in line):
-            line = line.replace("wlp3s0    IEEE 802.11  ESSID:","")
-            wifi_ssid = line.replace('"',"")
+            line = line.strip()
+            parsed = line.split(':')
+            wifi_ssid = parsed[1]
 except:
     print("WIFI READOUT ERROR! - iwconfig")
 

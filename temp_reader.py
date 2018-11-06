@@ -11,7 +11,7 @@ import subprocess
 # ---------------- Initialise variables ------------------
 
 device_label = 'RPi_0'
-wifi_interface = "wlp3s0"
+wifi_interface = "wlan0"
 db_host = 'temp-controller.amahi.net'
 db_host_port = '3306'
 db_user = 'rpi'

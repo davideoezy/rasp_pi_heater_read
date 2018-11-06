@@ -6,14 +6,19 @@ import glob
 import sys
 import time
 import io
+import subprocess
 
 # ---------------- Initialise variables ------------------
-# Device id
-device = "RPi_2"
 
-# Initialise db parameters in connection string below
+device_label = 'RPi_0'
+wifi_interface = "wlp3s0"
+db_host = 'temp-controller.amahi.net'
+db_host_port = '3306'
+db_user = 'rpi'
+db = 'temp_logger'
 
-#Conect to sensor
+
+#Connect to sensor
 base_dir = '/sys/bus/w1/devices/'
 device_folder = glob.glob(base_dir + '28*')[0]
 device_file = device_folder + '/w1_slave'
@@ -47,13 +52,43 @@ f = open("/sys/class/thermal/thermal_zone0/temp", "r")
 cpu_temp_string = (f.readline ())
 cpu_temp = float(cpu_temp_string) / 1000.0
 
+# read wifi info
+try:
+    proc = subprocess.Popen(["iwconfig",interface],stdout=subprocess.PIPE, universal_newlines=True)
+    out, err = proc.communicate()
+    WIFI = 0
+    wifi_ssid = ""
+    for line in out.split("\n"):
+        if("Quality" in line):
+            line = line.replace("Link Quality=","")
+            quality = line.split()[0].split('/')
+            WIFI = int(round(float(quality[0]) / float(quality[1]) * 100))
+            CurrentWIFI = WIFI
+    for line in out.split("\n"):
+        if("ESSID" in line):
+            line = line.replace("wlp3s0    IEEE 802.11  ESSID:","")
+            wifi_ssid = line.replace('"',"")
+except:
+    print("WIFI READOUT ERROR! - iwconfig")
+
+try:
+    proc = subprocess.Popen(["ifconfig",interface],stdout=subprocess.PIPE, universal_newlines=True)
+    out, err = proc.communicate()
+    IP = ""
+    for line in out.split("\n"):
+        if("192.168" in line):
+            strings = line.split(" ")
+            IP = strings[9]
+except:
+    print("WIFI READOUT ERROR! - ifconfig")
+
 #Connect to mariadb
 
 while True:
-    con = mariadb.connect(host='192.168.0.10', port='3306', user='user', password='password', database='db')
+    con = mariadb.connect("host={}, port={}, user={}, database={}".format(db_host,db_host_port,db_user,db))
     cur = con.cursor()
     try:
-        cur.execute("""INSERT INTO temperature (device,temp, cpu_temp) VALUES ('{}',{},{})""".format(device,read_temp(),cpu_temp))
+        cur.execute("""INSERT INTO temperature (device,temp, cpu_temp, ) VALUES ('{}',{},{})""".format(device_label,read_temp(),cpu_temp))
         con.commit()
     except:
         con.rollback()

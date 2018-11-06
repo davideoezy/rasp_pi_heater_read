@@ -58,7 +58,7 @@ cpu_temp = float(cpu_temp_string) / 1000.0
 
 # read wifi info
 try:
-    proc = subprocess.Popen(["iwconfig",interface],stdout=subprocess.PIPE, universal_newlines=True)
+    proc = subprocess.Popen(["iwconfig",wifi_interface],stdout=subprocess.PIPE, universal_newlines=True)
     out, err = proc.communicate()
     
     for line in out.split("\n"):
@@ -76,7 +76,7 @@ except:
     print("WIFI READOUT ERROR! - iwconfig")
 
 try:
-    proc = subprocess.Popen(["ifconfig",interface],stdout=subprocess.PIPE, universal_newlines=True)
+    proc = subprocess.Popen(["ifconfig",wifi_interface],stdout=subprocess.PIPE, universal_newlines=True)
     out, err = proc.communicate()
     IP = ""
     for line in out.split("\n"):

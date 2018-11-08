@@ -96,7 +96,7 @@ VALUES
 ('{}',{},{},'{}','{}',{})""".format(device_label,read_temp(),cpu_temp, wifi_ssid, device_address, wifi_signal_strength)
 
 while True:
-    con = mariadb.connect(host = db_host, port = db_host_port, user = db_user, database = db)
+    con = mariadb.connect(host = db_host, port = db_host_port, user = db_user, password = db_pass, database = db)
     cur = con.cursor()
     try:
         cur.execute(insert_stmt)

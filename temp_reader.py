@@ -12,9 +12,10 @@ import subprocess
 
 device_label = 'RPi_0'
 wifi_interface = "wlan0"
-db_host = 'temp-controller.amahi.net'
+db_host = 'hda.amahi.net'
 db_host_port = '3306'
 db_user = 'rpi'
+db_pass = 'warm_me'
 db = 'temp_logger'
 
 CurrentWIFI = 0
@@ -66,12 +67,12 @@ try:
             line = line.replace("Link Quality=","")
             quality = line.split()[0].split('/')
             WIFI = int(round(float(quality[0]) / float(quality[1]) * 100))
-            CurrentWIFI = WIFI
+            wifi_signal_strength = WIFI
     for line in out.split("\n"):
         if("ESSID" in line):
             line = line.strip()
             parsed = line.split(':')
-            wifi_ssid = parsed[1]
+            wifi_ssid = parsed[1].strip('"')
 except:
     print("WIFI READOUT ERROR! - iwconfig")
 
@@ -82,17 +83,17 @@ try:
     for line in out.split("\n"):
         if("192.168" in line):
             strings = line.split(" ")
-            IP = strings[9]
+            device_address = strings[9]
 except:
     print("WIFI READOUT ERROR! - ifconfig")
 
 #Connect to mariadb
 
 insert_stmt = """
-INSERT INTO temp_readings
-(device, temp, cpu_temp, wifi_signal_strengh, device_address)
+INSERT INTO temperature
+(device, temp, cpu_temp, device_ssid, device_address, wifi_signal_strength)
 VALUES
-('{}',{},{},{},'{}')""".format(device_label,read_temp(),cpu_temp,CurrentWIFI,IP)
+('{}',{},{},'{}','{}',{})""".format(device_label,read_temp(),cpu_temp, wifi_ssid, device_address, wifi_signal_strength)
 
 while True:
     con = mariadb.connect(host = db_host, port = db_host_port, user = db_user, database = db)
@@ -103,5 +104,4 @@ while True:
     except:
         con.rollback()
     con.close()
-    #rint("""INSERT INTO temperature (device,temp) VALUES ('{}',{})""".format(device,read_temp()))
     time.sleep(30)

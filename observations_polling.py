@@ -1,96 +1,88 @@
-#!/usr/bin/env python
 
-from twisted.internet import reactor
-from twisted.python import log
-import logging
-import txbom.observations
+
+import urllib.request
+import json
+import datetime
+import time
 import mysql.connector as mariadb
 
+# Set variables
 
-class MyObservationsClient(txbom.observations.Client):
+# BOM readings
+url = 'http://reg.bom.gov.au/fwo/IDV60901/IDV60901.94870.json'
 
-    def observationsReceived(self, observations):
-        '''
-        This method receives observation updates as they are retrieved.
-        '''
-        if self.observations:
-            if self.observations.current:
-                air_temp = observations.current.air_temp
-                apparent_t = observations.current.apparent_t
-                cloud = observations.current.cloud
-                cloud_oktas = observations.current.cloud_oktas
-                dewpt = observations.current.dewpt
-                gust_kmh = observations.current.gust_kmh
-                press = observations.current.press
-                rain_trace = observations.current.rain_trace
-                rel_hum = observations.current.rel_hum
-                vis_km = observations.current.vis_km
-                wind_dir = observations.current.wind_dir
-                wind_spd_kmh = observations.current.wind_spd_kmh
+# DB details
+db_host = 'hda.amahi.net'
+db_host_port = '3306'
+db_user = 'rpi'
+db_pass = 'warm_me'
+db = 'temp_logger'
 
-# Insert records to db
-                con = mariadb.connect(host='192.168.0.10', port='3306', user='user', password='pass', database='db')
-                cur = con.cursor()
-                try:
-                    cur.execute("""INSERT INTO outside_conditions (
-                    air_temp,
-                    apparent_t,
-                    cloud,
-                    cloud_oktas,
-                    dewpt,
-                    gust_kmh,
-                    press,
-                    rain_trace,
-                    rel_hum,
-                    vis_km,
-                    wind_dir,
-                    wind_spd_kmh)
-                    VALUES
-                    (%s,
-                    %s,
-                    '%s',
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    '%s',
-                    %s)"""
-                    % (air_temp,
-                    apparent_t,
-                    cloud,
-                    cloud_oktas,
-                    dewpt,
-                    gust_kmh,
-                    press,
-                    rain_trace,
-                    rel_hum,
-                    vis_km,
-                    wind_dir,
-                    wind_spd_kmh))
+def response(url):
+    with urllib.request.urlopen(url) as response: 
+        jsonString = response.read()
+        jsonData = json.loads(jsonString)
+        current_reading = jsonData['observations']['data'][0]
+    return(current_reading)
 
-                    con.commit()
-                except:
-                    con.rollback()
-                con.close()
-            else:
-                print "No current observation"
-        else:
-            print "No observations"
+while True:
+    
+    locals().update(response(url))
+    
+    reading_ts = datetime.datetime.strptime(local_date_time_full, '%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S')
 
-logging.basicConfig(level=logging.DEBUG)
+    insert_stmt = """
+INSERT INTO outside_conditions (
+air_temp,
+apparent_t,
+cloud,
+cloud_oktas,
+dewpt,
+gust_kmh,
+press,
+rain_trace,
+rel_hum,
+vis_km,
+wind_dir,
+wind_spd_kmh,
+reading_ts)
+VALUES
+(%s,
+%s,
+'%s',
+%s,
+%s,
+%s,
+%s,
+%s,
+%s,
+%s,
+'%s',
+%s,
+'%s')""" % (air_temp, 
+            apparent_t,
+            cloud, 
+            cloud_oktas, 
+            dewpt, 
+            gust_kmh, 
+            press, 
+            rain_trace, 
+            rel_hum, 
+            vis_km, 
+            wind_dir, 
+            wind_spd_kmh, 
+            reading_ts)
 
-# Send any Twisted log messages to logging logger
-_observer = log.PythonLoggingObserver()
-_observer.start()
+    
+    con = mariadb.connect(host = db_host, port = db_host_port, user = db_user, password = db_pass, database = db)
+    cur = con.cursor()
 
-# Adelaide observations identifier
-observation_url = "http://reg.bom.gov.au/fwo/IDV60901/IDV60901.94870.json"
+    try:
+        cur.execute(insert_stmt)
+        con.commit()
+    except:
+        con.rollback()
 
-client = MyObservationsClient(observation_url)
+    con.close()
+    time.sleep(600)
 
-# strart the client's periodic observations update service.
-reactor.callWhenRunning(client.start)
-reactor.run()

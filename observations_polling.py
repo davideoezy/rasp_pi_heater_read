@@ -21,7 +21,7 @@ db = 'temp_logger'
 def response(url):
     with urllib.request.urlopen(url) as response: 
         jsonString = response.read()
-        jsonData = json.loads(jsonString)
+        jsonData = json.loads(jsonString.decode('utf-8'))
         current_reading = jsonData['observations']['data'][0]
     return(current_reading)
 

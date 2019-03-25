@@ -1,0 +1,28 @@
+create database temp_logger;
+use temp_logger;
+
+create table outside_conditions (
+air_temp float,
+apparent_t float,
+cloud varchar(15),
+cloud_oktas float,
+dewpt float,
+gust_kmh int,
+press float,
+rain_trace float,
+rel_hum float,
+vis_km float,
+wind_dir varchar(4),
+wind_spd_kmh float,
+reading_ts varchar(30));
+
+create table temperature (
+device varchar(15), 
+temp float, 
+cpu_temp float, 
+device_ssid varchar(20), 
+device_address varchar(20), 
+wifi_signal_strength float);
+
+create user 'rpi' identified by 'warm_me';
+GRANT ALL PRIVILEGES ON temp_logger.* TO 'rpi'@'%' identified by 'warm_me';

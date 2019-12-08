@@ -4,7 +4,7 @@ Python3 script to read the temperature from a DS18B20. These temperature reading
 
 Instructions - Common:
 1. Ensure 1-wire is enabled on Raspbery Pi (Zero running Raspbian Pi in my case)
-2. Install mqtt - sudo apt-get -y install python3-paho-mqtt
+2. Install mqtt - sudo pip3 install paho-mqtt
 3. Create git folder in home directory on Pi
 4. Clone repo
 

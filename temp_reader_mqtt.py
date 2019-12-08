@@ -22,7 +22,7 @@ temp_c = 0
 # Broker details:
 broker_address="192.168.0.10" 
 client = mqtt.Client("Pi_1")
-client.connect(broker_address)
+client.connect(broker_address, keepalive=60)
 
 #Connect to sensor
 base_dir = '/sys/bus/w1/devices/'

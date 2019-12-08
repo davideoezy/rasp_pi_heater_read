@@ -1,38 +1,34 @@
 #!/usr/bin/python3
-# Need mysql.connector - sudo apt-get -y install python3-mysql.connector
 
-import mysql.connector as mariadb
 import glob
 import sys
 import time
 import io
 import subprocess
+import paho.mqtt.client as mqtt
 
 # ---------------- Initialise variables ------------------
 
-device_label = 'RPi_0'
+topic = "sensors/inside/temperature"
+measurement = "temperature"
+location = "inside"
+device_label = 'living_room'
 wifi_interface = "wlan0"
-db_host = 'hda.amahi.net'
-db_host_port = '3306'
-db_user = 'rpi'
-db_pass = 'warm_me'
-db = 'temp_logger'
 
 CurrentWIFI = 0
 wifi_ssid = ""
 IP = ""
 temp_c = 0
 
+# Broker details:
+broker_address="192.168.0.10" 
+client = mqtt.Client("Pi_1")
+client.connect(broker_address)
+
 #Connect to sensor
 base_dir = '/sys/bus/w1/devices/'
 device_folder = glob.glob(base_dir + '28*')[0]
 device_file = device_folder + '/w1_slave'
-
-# Read device info
-def read_rom():
-    name_file=device_folder+'/name'
-    f = open(name_file,'r')
-    return f.readline()
 
 #Raw temp
 def read_temp_raw():
@@ -84,7 +80,7 @@ def read_device_address():
     try:
         proc = subprocess.Popen(["ifconfig",wifi_interface],stdout=subprocess.PIPE, universal_newlines=True)
         out, err = proc.communicate()
-        IP = ""
+        device_address = ""
         for line in out.split("\n"):
             if("192.168" in line):
                 strings = line.split(" ")
@@ -93,24 +89,12 @@ def read_device_address():
     except:
         return("ERROR!-ifconfig")
 
-#Connect to mariadb
-
+#Broadcast message
 
 while True:
+    reading_influx = "%s,location=%s,device=%s inside_temp=%s,cpu_temp=%s,device_ssid=%s,device_address=%s,wifi_signal_strength=%s" % (
+        measurement, location, device_label, read_temp(),read_cpu_temp(),read_wifi_signal_strength()[1], read_device_address(), read_wifi_signal_strength()[0])
+    print(reading_influx)
 
-    insert_stmt = """
-    INSERT INTO temperature
-    (device, temp, cpu_temp, device_ssid, device_address, wifi_signal_strength)
-    VALUES
-    ('{}',{},{},'{}','{}',{})""".format(device_label,read_temp(),read_cpu_temp(), 
-    read_wifi_signal_strength()[1], read_device_address(), read_wifi_signal_strength()[0])
-
-    con = mariadb.connect(host = db_host, port = db_host_port, user = db_user, password = db_pass, database = db)
-    cur = con.cursor()
-    try:
-        cur.execute(insert_stmt)
-        con.commit()
-    except:
-        con.rollback()
-    con.close()
-    time.sleep(30)
+    client.publish(topic,str(reading_influx))
+    time.sleep(10)

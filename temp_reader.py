@@ -11,8 +11,7 @@ import paho.mqtt.client as mqtt
 
 topic = "sensors/inside/temperature"
 measurement = "temperature"
-location = "inside"
-device_label = 'living_room'
+location = "living_room"
 wifi_interface = "wlan0"
 
 CurrentWIFI = 0
@@ -92,9 +91,8 @@ def read_device_address():
 #Broadcast message
 
 while True:
-    reading_influx = "%s,location=%s,device=%s inside_temp=%s,cpu_temp=%s,device_ssid=%s,device_address=%s,wifi_signal_strength=%s" % (
-        measurement, location, device_label, read_temp(),read_cpu_temp(),read_wifi_signal_strength()[1], read_device_address(), read_wifi_signal_strength()[0])
-    print(reading_influx)
+    reading_temp = "%s,location=%s air_temp=%s" % (measurement, location, read_temp())
+    print(reading_temp)
 
-    client.publish(topic,str(reading_influx))
+    client.publish(topic,str(reading_temp))
     time.sleep(10)
